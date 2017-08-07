@@ -1,0 +1,39 @@
+def check_feature_frequency(_method_version, _n_gram_tokens, _ngram_features, _ngram_tokenized_file_name):
+    global verbose_flag, similar_cutoff, similar_count
+    _frequency_list = list()  # [100111111102234111242111123....
+    _words = list()  # each feature and its frequency for eg:(1, ' (PURPOSE . See)'), (3, ' (Public . License)'), ...
+    for _i in range(len(_ngram_features)):
+        _word = _ngram_features[_i]
+        if _method_version == 1:
+            count = len(get_close_matches(_word, list(set(_n_gram_tokens)), similar_count, cutoff=similar_cutoff))
+        elif _method_version == 2 or _method_version == 3:
+            count = _n_gram_tokens.count(_word)
+            if count >= similar_count:
+                count = similar_count
+            else:
+                _matches_list = get_close_matches(_word, list(set(_n_gram_tokens)), similar_count + 1,
+                                                  cutoff=similar_cutoff)
+                _matches_len = len(_matches_list)
+                _index = 0
+                if count > 0 and _matches_len > 1:
+                    _index = 1
+                    for _j in range(_index, _matches_len):
+                        count += _n_gram_tokens.count(_matches_list[_j])
+                elif count == 0 and _matches_len > 0:
+                    _index = 0
+                    for _j in range(_index, _matches_len):
+                        count += _n_gram_tokens.count(_matches_list[_j])
+                if count > similar_count:
+                    count = similar_count
+        elif _method_version == 4:
+            count = _n_gram_tokens.count(_word)
+            count += len(get_close_matches(_word, list(set(_n_gram_tokens)), similar_count, cutoff=similar_cutoff))
+        else:
+            count = _n_gram_tokens.count(_word)
+        _frequency_list.append(count)
+        if count > 0:
+            _words.append((count, _word))
+    verbose_function(
+        (_ngram_tokenized_file_name, " frequency vector computing(frequency,feature)has been done:", _words),
+        verbose_flag)
+    return _frequency_list
